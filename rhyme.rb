@@ -123,20 +123,17 @@ def family_rhyme(word, corpus)
 end
 
 input = "first sentence" #STDIN.gets
-syns = input.split(/\s+/).map do |w|
-  [w, synonyms(w)[0..10]] # limit the size for now
-end.to_h # {word => [word]}
-r_syns = syns.map {|k, vs| [k, vs.map {|v| v.reverse }] }.to_h
-
-corpus = syns.keys + syns.values.flatten
-IPAs = ipa corpus # {word => ipa}
-R_IPAs = IPAs.map {|k, v| [k.reverse, v.reverse] }.to_h
 
 # match from one corpus to the others (no need to do full permutations, since
 # if A matches B, and B matches C, we know that A will match C... but we don't
 # know how many characters it will match. Hmmm...
-def match_across_synonyms(corpi, &matcher)
-  matcher ||= proc {|w| IPAs[w] }
+def match_across_synonyms(sentence, &transform)
+  syns = sentence.split(/\s+/).map do |w|
+    [w, synonyms(w)[0..10].map(&transform)] # limit the size for now
+  end.to_h # {word => [word]}
+  
+  corpus = syns.keys + syns.values.flatten
+  ipas = ipa(corpus).map {|k, v| [transform k, transform v] }.to_h
 
   combinations = corpi.reduce do |s, v|
     s.product v
@@ -145,7 +142,7 @@ def match_across_synonyms(corpi, &matcher)
   # This matches **IPA**, not **spelling**. Took me a while to remember,
   # despite having written the code myself.
   combos = combinations.map do |words|
-    pairs = words.map(&matcher).combination 2
+    pairs = words.map {|w| ipas[w] }.combination 2
     score = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }.min
 
     [words, score]
