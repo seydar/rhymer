@@ -157,37 +157,6 @@ def match_across_synonyms(sentence, &transform)
   #else
   #  sorted[0]
   #end
-
-  ## Try also:
-  ##   sorting the reverse IPA and then comparing the positions in the sorted list
-  ##   (doomed to fail if it crosses a boundary of some sort, but... maybe it'll
-  ##   get me close enough?)
-  #combinations.map do |w_1, w_2|
-  #  r_w_1, r_w_2 = R_ipas[w_1], R_ipas[w_2]
-  #  num_matching = matching_from_start r_w_1, r_w_2
-  #  [w_1, w_2, num_matching]
-  #end
-
-  ## Turn it into a multi-level hash (arguably a form of trie?)
-  #combos = Hash.new {|h, k| h[k] = {} }
-  #combinations.each do |w_1, w_2, num|
-  #  combos[w_1][w_2] = num
-  #end
-
-  ## Find the largest map across the corpi
-  ## 
-  ## original sentence has this many words in it, so only go this many steps as
-  ## we try to figure out the highest sum
-  ##
-  ## Basically, find the largest n-step chain by recursing through the list
-  #steps = corpi.size
-
-  #records = []
-
-  ## `combos.keys` will give us all the words in the first corpus
-  #combos.keys.each do |word|
-  #  combos[word].each 
-  #end
 end
 
 require 'pry'
