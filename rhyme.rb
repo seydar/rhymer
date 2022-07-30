@@ -6,24 +6,24 @@ require 'string_to_ipa'
 VOWELS = %w[
 a
 ä
-ɑ 
-ɒ 
-æ 
-ɔ 
+ɑ
+ɒ
+æ
+ɔ
 e
-ə 
-ɛ 
+ə
+ɛ
 ɝ
 i
-ɪ 
-ɨ 
+ɪ
+ɨ
 o
 ŏ
 u
-ʊ 
+ʊ
 ŭ
 ü
-ʌ 
+ʌ
 y
 ]
 
@@ -76,7 +76,7 @@ class StringToIpa::Phonetic
     phonetic = database.execute("select * from phonetics where word = \"#{@word.upcase}\"")
 
     if phonetic == []
-      return @word
+      return "" #@word
     else
       return phonetic[0]["phonetic"]
     end
@@ -89,7 +89,7 @@ end
 
 def matching_from_start(word_1, word_2)
   i = 0
-  until word_1[i] != word_2[i]
+  until word_1[i] != word_2[i] || word_1[i].nil? || word_2[i].nil?
     i += 1
   end
 
@@ -128,12 +128,15 @@ input = "first sentence" #STDIN.gets
 # if A matches B, and B matches C, we know that A will match C... but we don't
 # know how many characters it will match. Hmmm...
 def match_across_synonyms(sentence, &transform)
+  transform ||= proc {|w| w }
+
   syns = sentence.split(/\s+/).map do |w|
-    [w, synonyms(w)[0..10].map(&transform)] # limit the size for now
+    [w, synonyms(w)] # limit the size for now
   end.to_h # {word => [word]}
   
   corpus = syns.keys + syns.values.flatten
-  ipas = ipa(corpus).map {|k, v| [transform k, transform v] }.to_h
+  ipas   = ipa(corpus).map {|k, v| [k, transform[v]] }.to_h
+  corpi  = syns.values
 
   combinations = corpi.reduce do |s, v|
     s.product v
@@ -148,8 +151,12 @@ def match_across_synonyms(sentence, &transform)
     [words, score]
   end
 
-  combos.max_by {|ws, s| s }
-
+  sorted = combos.sort_by {|ws, s| -s }
+  #if sorted[0][0][0] == sorted[0][0][1]
+  #  sorted[1]
+  #else
+  #  sorted[0]
+  #end
 
   ## Try also:
   ##   sorting the reverse IPA and then comparing the positions in the sorted list
