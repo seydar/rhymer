@@ -88,12 +88,12 @@ def ipa(words)
 end
 
 def matching_from_start(word_1, word_2)
-  num = 0
-  [word_1.size, word_2.size].min.times do |i|
-    num += 1 if word_1[i] == word_2[i]
+  i = 0
+  until word_1[i] != word_2[i]
+    i += 1
   end
 
-  num
+  i
 end
 
 def best_match(word, corpus, &transform)
@@ -122,20 +122,68 @@ def family_rhyme(word, corpus)
   best_match(word, corpus) {|w| vowels w }
 end
 
-input = "first" #STDIN.gets
+input = "first sentence" #STDIN.gets
 syns = input.split(/\s+/).map do |w|
-  # [[i, w], synonyms(w)]
-  [w, ipa(synonyms(w))]
-end.to_h
+  [w, synonyms(w)[0..10]] # limit the size for now
+end.to_h # {word => [word]}
+r_syns = syns.map {|k, vs| [k, vs.map {|v| v.reverse }] }.to_h
 
 corpus = syns.keys + syns.values.flatten
-ipas = ipa corpus
+IPAs = ipa corpus # {word => ipa}
+R_IPAs = IPAs.map {|k, v| [k.reverse, v.reverse] }.to_h
 
 # match from one corpus to the others (no need to do full permutations, since
 # if A matches B, and B matches C, we know that A will match C... but we don't
 # know how many characters it will match. Hmmm...
-def match_across_synonyms(*corpi)
-  
+def match_across_synonyms(corpi, &matcher)
+  matcher ||= proc {|w| IPAs[w] }
+
+  combinations = corpi.reduce do |s, v|
+    s.product v
+  end
+
+  # This matches **IPA**, not **spelling**. Took me a while to remember,
+  # despite having written the code myself.
+  combos = combinations.map do |words|
+    pairs = words.map(&matcher).combination 2
+    score = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }.min
+
+    [words, score]
+  end
+
+  combos.max_by {|ws, s| s }
+
+
+  ## Try also:
+  ##   sorting the reverse IPA and then comparing the positions in the sorted list
+  ##   (doomed to fail if it crosses a boundary of some sort, but... maybe it'll
+  ##   get me close enough?)
+  #combinations.map do |w_1, w_2|
+  #  r_w_1, r_w_2 = R_ipas[w_1], R_ipas[w_2]
+  #  num_matching = matching_from_start r_w_1, r_w_2
+  #  [w_1, w_2, num_matching]
+  #end
+
+  ## Turn it into a multi-level hash (arguably a form of trie?)
+  #combos = Hash.new {|h, k| h[k] = {} }
+  #combinations.each do |w_1, w_2, num|
+  #  combos[w_1][w_2] = num
+  #end
+
+  ## Find the largest map across the corpi
+  ## 
+  ## original sentence has this many words in it, so only go this many steps as
+  ## we try to figure out the highest sum
+  ##
+  ## Basically, find the largest n-step chain by recursing through the list
+  #steps = corpi.size
+
+  #records = []
+
+  ## `combos.keys` will give us all the words in the first corpus
+  #combos.keys.each do |word|
+  #  combos[word].each 
+  #end
 end
 
 require 'pry'
