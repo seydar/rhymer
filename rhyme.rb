@@ -122,12 +122,7 @@ def family_rhyme(word, corpus)
   best_match(word, corpus) {|w| vowels w }
 end
 
-input = "first sentence" #STDIN.gets
-
-# match from one corpus to the others (no need to do full permutations, since
-# if A matches B, and B matches C, we know that A will match C... but we don't
-# know how many characters it will match. Hmmm...
-def match_across_synonyms(sentence, &transform)
+def correlate_synonyms(sentence, &transform)
   transform ||= proc {|w| w }
 
   syns = sentence.split(/\s+/).map do |w|
@@ -159,7 +154,21 @@ def match_across_synonyms(sentence, &transform)
   #end
 end
 
-require 'pry'
-binding.pry
+#require 'pry'
+#binding.pry
+
+def alliterate(sentence)
+  correlate_synonyms sentence
+end
+
+def family_rhyme(sentence)
+  correlate_synonyms(sentence) {|w| vowels w }
+end
+
+def rhyme(sentence)
+  correlate_synonyms(sentence) {|w| w.reverse }
+end
+
+pp rhyme("first sentence")[0..20]
 
 
