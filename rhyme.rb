@@ -1,6 +1,6 @@
 require 'thesaurus'
-require 'net/http'
-require 'nokogiri'
+#require 'net/http'
+#require 'nokogiri'
 require 'string_to_ipa'
 
 VOWELS = %w[
@@ -45,7 +45,7 @@ def synonyms(word)
   syns.filter {|w| w.split(/\s/).size == 1}
 end
 
-Website = URI "https://tophonetics.com/"
+#Website = URI "https://tophonetics.com/"
 
 # FIXME this only gets Br*tish pronunciation. For some reason, I'm unable to
 # get the site to return American pronunciation.
@@ -65,23 +65,6 @@ Website = URI "https://tophonetics.com/"
 #  #words = words.map.with_index {|w, i| [i, w] }
 #  words.zip(ipas).to_h
 #end
-
-# Cannot for the life of me figure out why the commented-out query isn't working -- it's
-# the original from the library! it works in small batches! what is going on?????
-class StringToIpa::Phonetic
-  def to_ipa
-    #s = database.prepare("SELECT phonetic from phonetics where word = ?")
-    #s.bind_params(@word.upcase)
-    #p s.to_s
-    phonetic = database.execute("select * from phonetics where word = \"#{@word.upcase}\"")
-
-    if phonetic == []
-      return "" #@word
-    else
-      return phonetic[0]["phonetic"]
-    end
-  end
-end
 
 def ipa(words)
   words.map {|w| [w, w.to_ipa] }.to_h
@@ -169,6 +152,15 @@ def rhyme(sentence)
   correlate_synonyms(sentence) {|w| w.reverse }
 end
 
-pp rhyme("first sentence")[0..20]
+# maybe have the secondary sort be by syllable length difference
+# or have some kind of meter test
+phrase = ARGV.join(" ")
+puts "Family rhymes:"
+family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
 
+puts "Allterations:"
+alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+
+puts "Rhymes:"
+rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
 
