@@ -1,0 +1,97 @@
+2128 AIR FORCE ˈɛrfɔrs
+3257 AL AMEIN ˈæɫəmˌeɪn
+25438 COSTA RICA kˈɔstərˈikə
+27109 CUL DE SAC ˈʌɫdɪsˌæk
+30813 DES MOINES dˌɛmˈɔɪnz
+35338 DC dˈisˈi
+35339 deja dˌeɪdʒˈɑ
+54702 HILTON HEAD hˈɪɫtənhˈɛd
+56102 HORS d'OEUVRE ˌɔrdˈɝv
+56103 HORS d'OEUVRES ˌɔrdˈɝvz
+60823 IRA ˈaɪˈɑrˈeɪ
+63930 KEY LARGO kˌiɫˈɑrgoʊ
+63931 KEY wESTkˌiwˈɛst
+64688 KLAMATH FALLS kɫˈæməθfˈɔɫz
+67242 LANAI CITY ɫənˈaɪsˌɪti
+67822 LAS VEGAS ɫˈɑsvˈeɪgəs
+68272 LA CARRE ɫˈɑkˌɑrˈeɪ
+68273 LA CROSSE ɫəkrˈɔs
+68274 LA gUARDIAɫəgwˈɑrdiə
+68275 LA NINA ɫənˈinjə
+68276 LA PAZ ɫˈʌpɔz
+68277 LA QUINTA ɫəkwˈɪntə
+70434 LITTLE ROCK ɫˈɪtəɫrˈɔk
+71010 LONG BEACH ɫˈɔŋbˈitʃ
+71011 LONG ISLAND ɫˌɔŋˈaɪɫənd
+71234 LOS ANGELES ɫˌɔsˈændʒəɫəs
+71235 LOS PALMAS ɫˌɑspˈɑɫməs
+80744 MOUNT EVEREST mˌaʊntˈɛvɝɛst
+83139 NEW BEDFORD nˌubˈɛdfɝd
+83140 NEW bERN nubˈɝn
+83141 NEW CALEDONIA nˈukˌæɫədˈoʊniə
+83142 NEW dELHI nudˈɛɫi
+83143 NEW HAMPSHIRE nˈuhˈæmpʃɝ
+83144 NEW HAMPSHIRE'S nˈuhˈæmpʃɝz
+83145 NEW HAMPSHIRITE nˈuhˈæmpʃɝˌaɪt
+83146 NEW HAMPSHIRITES nˈuhˈæmpʃɝˌaɪts
+83147 NEW HAVEN nˈuheɪvən
+83148 NEW JERSEY nˈudʒˈɝzi
+83149 NEW JERSEY 'Snˈudʒˈɝziz
+83150 NEW LONDON nuɫˈʌndən
+83151 NEW mEXICO nˈumˈɛksəkˌoʊ
+83152 NEW mEXICO'S nˈumˈɛksəkˌoʊz
+83153 NEW ORLEANS nuˈɔrɫinz
+83154 NEW ORLEANS njˈuˈɔrɫinz
+83155 NEW YORK nˈujˈɔrk
+83156 NEW YORK'S nˈujˈɔrks
+83157 NEW YORK CITY nˈujˈɔrksˈɪti
+83158 NEW zEALAND nˈuzˈiɫənd
+84890 N WORDS ˈɛnwˈɝdz
+88060 PAGO pAGO pˌɑgoʊpˈɑgoʊ
+93381 PORT AU pRINCE pˈɔrtoʊprˈɪns
+95659 PUERTO RICAN pwˈɛrtˌoʊrˈikən
+95660 PUERTO rICAN(1)pˈɔrtərˈikən
+95661 PUERTO rICANSpwˈɛrtˌoʊrˈikənz
+95662 PUERTO rICANS(1)pˈɔrtərˈikənz
+95663 PUERTO rICOpwˈɛrtˌoʊrˈikoʊ
+95664 PUERTO rICO(1)pˈɔrtərˈikoʊ
+116026 ST tʃARLESsˈeɪnttʃˈɑrəɫz
+116027 ST _CLAIRsˈeɪntkɫˈɛr
+116028 ST _CLAIREsˈeɪntkɫˈɛr
+116029 ST _CYRsˈeɪntkˈɪr
+116030 ST _CYR(1)sˈeɪntsˈɪr
+116031 ST dENISsˈeɪntdˈɛnɪs
+116032 ST dENNISsˈeɪntdˈɛnɪs
+116033 ST gEORGEsˈeɪntdʒˈɔrdʒ
+116034 ST gERMAINsˈeɪntdʒˌɝmˈeɪn
+116035 ST gERMAINEsˈeɪntdʒˌɝmˈeɪn
+116036 ST gERMAINE(1)sˈɑnʒˌɝmˈeɪn
+116037 ST _HILAIREsˈeɪnthɪɫˈeɪr
+116038 ST _JACQUESsˈeɪntdʒˈɑks
+116039 ST _JACQUES(1)sˈɑnʒˈɑks
+116040 ST _JAMESsˈeɪntdʒˈeɪmz
+116041 ST _JEANsˈeɪntdʒˈin
+116042 ST _JOHNsˈeɪntdʒˈɑn
+116043 ST _JOHNSsˈeɪntdʒˈɑnz
+116044 ST _JULIENsˈeɪntdʒˈuɫiən
+116045 ST ɫAURENTsˈeɪntɫˈɔrənt
+116046 ST ɫAURENT(1)sˈɑnɫˌɔrˈɔnt
+116047 ST ɫAWRENCEsˈeɪntɫˈɔrəns
+116048 ST ɫOUISsˈeɪntɫˈuəs
+116049 ST ɫOUIS(1)sˈeɪntɫˈui
+116050 ST ɫUCIAsˈeɪntɫˈuʃə
+116051 ST ɫUCIA(1)sˈeɪntɫˌusˈiə
+116052 ST mARIEsˈeɪntmɝˈi
+116053 ST mARTINsˈeɪntmˈɑrtɪn
+116054 ST mARYsˈeɪntmˈɛri
+116055 ST pETERsˈeɪntpˈitɝ
+116056 ST pETERSBURGsˈeɪntpˈitɝzbɝg
+116057 ST pIERREsˈeɪntpjˈɛr
+116058 ST θOMASsˈeɪntˈɑməs
+119157 TEL _AVIVtˈɛɫɑvˈiv
+119434 TERRE _HAUTEtˈɛrəhˈoʊt
+119435 TERRE _HAUTE(1)tˈɛrəhˈʌt
+123529 T _A_Ctˈiˈeɪsˈi
+123530 T _A_C(1)tˈæk
+125330 U sm_Cjˈuˈɛsˈɛmsˈi
+125952 VAN gOGHvˈængˈoʊ

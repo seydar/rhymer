@@ -1,37 +1,9 @@
 require 'thesaurus'
-#require 'net/http'
-#require 'nokogiri'
 require 'string_to_ipa'
+require './ipa.rb'
 
-VOWELS = %w[
-a
-ä
-ɑ
-ɒ
-æ
-ɔ
-e
-ə
-ɛ
-ɝ
-i
-ɪ
-ɨ
-o
-ŏ
-u
-ʊ
-ŭ
-ü
-ʌ
-y
-]
-
-# TODO In #ipa and the main body, words are treated as having only one way to
-# be pronounced. I should fix this in the future, when I'm better able to a)
-# figure out which pronunciation is correct and b) scrape them from the website
-# (which is available, but slightly more complex than I want to implement for
-# this first iteration)
+# I have no idea if there are diacritics in the IPA DB. If there are,
+# then splitting based on "character" would be a mistake. Just FYI.
 
 def synonyms(word)
   # Can swap out different thesauruses here 
@@ -44,27 +16,6 @@ def synonyms(word)
   # only take the one-word synonyms
   syns.filter {|w| w.split(/\s/).size == 1}
 end
-
-#Website = URI "https://tophonetics.com/"
-
-# FIXME this only gets Br*tish pronunciation. For some reason, I'm unable to
-# get the site to return American pronunciation.
-#
-# FIXME What about when a word has different pronunciations? e.g. "read"
-#def ipa(words)
-#  p words
-#  res = Net::HTTP.post_form Website, :text_to_transcribe => words.join(' '),
-#                                     :output_dialect     => "am"
-#  doc = Nokogiri::HTML res.body
-#
-#  ipa = doc.css ".transcribed_word"
-#  ipas = ipa.children.map {|c| c.text }
-#  p ipas.size
-#  p words.size
-#
-#  #words = words.map.with_index {|w, i| [i, w] }
-#  words.zip(ipas).to_h
-#end
 
 def ipa(words)
   words.map {|w| [w, w.to_ipa] }.to_h
@@ -97,6 +48,20 @@ def best_match(word, corpus, &transform)
   tally.max[0]
 end
 
+def syllables(word)
+  #vowels(word).size # naive
+  word.split(/#{CONSONANTS}/).filter {|s| not s.empty? }.size
+end
+
+# what if the first character is a tick? then it starts with a :high
+def meter(word)
+  if word.include? "ˈ"
+    [:low] + ([:high] * ((syllables(word) - 1) / 2)).join(:low)
+  else
+    ([:high] * (syllables(word) / 2)).join :low
+  end
+end
+
 def vowels(word)
   word.split(//).filter {|c| VOWELS.include? c }
 end
@@ -108,9 +73,15 @@ end
 def correlate_synonyms(sentence, &transform)
   transform ||= proc {|w| w }
 
-  syns = sentence.split(/\s+/).map do |w|
+  syns = sentence.downcase.split(/\s+/).map do |w|
     [w, synonyms(w)] # limit the size for now
   end.to_h # {word => [word]}
+  
+  if syns.values.size <= 1
+    plural = syns.values.size != 1
+    raise "can only correlate multiple words (only #{syns.values.size} " +
+          "word#{plural ? "s" : ""} provided)"
+  end
   
   corpus = syns.keys + syns.values.flatten
   ipas   = ipa(corpus).map {|k, v| [k, transform[v]] }.to_h
@@ -145,7 +116,7 @@ def alliterate(sentence)
 end
 
 def family_rhyme(sentence)
-  correlate_synonyms(sentence) {|w| vowels w }
+  correlate_synonyms(sentence) {|w| vowels w.reverse }
 end
 
 def rhyme(sentence)
@@ -154,13 +125,13 @@ end
 
 # maybe have the secondary sort be by syllable length difference
 # or have some kind of meter test
-phrase = ARGV.join(" ")
-puts "Family rhymes:"
-family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
-
-puts "Allterations:"
-alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
-
-puts "Rhymes:"
-rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+#phrase = ARGV.join(" ")
+#puts "Family rhymes:"
+#family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+#
+#puts "Allterations:"
+#alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+#
+#puts "Rhymes:"
+#rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
 
