@@ -48,20 +48,79 @@ def best_match(word, corpus, &transform)
   tally.max[0]
 end
 
+# Split will normally remove the delimiter.
+# By using a regex with look-behind (?<=), we keep the delimiter
+# and maintain it with one of the splittings (as opposed to leaving it
+# on its own)
+#
+# Clever trick learned from stack overflow.
+#
+# In addition, simply capturing the match with () is enough to keep the
+# delimiter, but it won't be part of any split group and will be separate
+#
+# Here, we make use of both of those tricks
 def syllables(word)
-  #vowels(word).size # naive
-  word.split(/#{CONSONANTS}/).filter {|s| not s.empty? }.size
+  return [] if vowels(word).empty?
+
+  word.split(/(#{DIPHTHONGS.join '|'})/).map do |part|
+    if part =~ /#{DIPHTHONGS.join '|'}/
+      part
+    else
+      part.split(/(?<=#{VOWELS.join '|'})/).filter {|s| not s.empty? }
+    end
+  end.flatten.reduce [] do |parts, syl|
+    if parts.empty?
+      [syl]
+    elsif vowels(parts[-1]).empty? or vowels(syl).empty?
+      parts[-1] = parts[-1] + syl
+      parts
+    else
+      parts << syl
+    end
+  end
 end
 
 # what if the first character is a tick? then it starts with a :high
 def meter(word)
+  word.gsub /^[ˈ]+/, '' # in case the word begins with a tick
+
+  # If the stress comes in the middle of the word,
+  # we know that immediately after it will be a `:high` and
+  # immediately before it will be a `:low`, so fudge the meter until
+  # you get the flow that works.
   if word.include? "ˈ"
-    [:low] + ([:high] * ((syllables(word) - 1) / 2)).join(:low)
+    first, last = word.split "ˈ"
+
+    # The invariant here is that it will begin with `:high`
+    sylls = syllables(last).size
+    met_last = if sylls.even?
+                 [:high, :low] * (sylls / 2)
+               else
+                 [:high] + [:low, :high] * (sylls / 2)
+               end
+
+    # The invariant here is that it will end with `:low`
+    sylls = syllables(first).size
+    met_first = if sylls.even?
+                  [:high, :low] * (sylls / 2)
+                else
+                  [:low] + [:high, :low] * (sylls / 2)
+                end
+
+    met_first + met_last
   else
-    ([:high] * (syllables(word) / 2)).join :low
+    # Else pretend that the stress is word-initial
+    sylls = syllables(word).size
+    if sylls.even?
+      [:high, :low] * (sylls / 2)
+    else
+      [:high] + [:low, :high] * (sylls / 2)
+    end
   end
 end
 
+# This should somehow pay attention to syllable boundaries
+# FIXME
 def vowels(word)
   word.split(//).filter {|c| VOWELS.include? c }
 end
@@ -89,18 +148,24 @@ def correlate_synonyms(sentence, &transform)
 
   combinations = corpi.reduce do |s, v|
     s.product v
-  end
+  end.map {|ws| ws.flatten }
 
   # This matches **IPA**, not **spelling**. Took me a while to remember,
   # despite having written the code myself.
   combos = combinations.map do |words|
-    pairs = words.map {|w| ipas[w] }.combination 2
-    score = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }.min
+    if words.uniq.size != words.size
+      # if any duplicate words, -(-1) will be the highest score
+      # and thus the biggest loser
+      [words, [-1]] 
+    else
+      pairs = words.map {|w| ipas[w] }.combination 2
+      scores = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }
 
-    [words, score]
+      [words, scores]
+    end
   end
 
-  sorted = combos.sort_by {|ws, s| -s }
+  sorted = combos.sort_by {|ws, s| -(s.min) }
   #if sorted[0][0][0] == sorted[0][0][1]
   #  sorted[1]
   #else
@@ -123,15 +188,31 @@ def rhyme(sentence)
   correlate_synonyms(sentence) {|w| w.reverse }
 end
 
-# maybe have the secondary sort be by syllable length difference
-# or have some kind of meter test
-#phrase = ARGV.join(" ")
-#puts "Family rhymes:"
-#family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
-#
-#puts "Allterations:"
-#alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
-#
-#puts "Rhymes:"
-#rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+def syllable_length(sentence)
+  matches = alliterate(sentence)[0..20]
+  matches.map do |ws, s|
+    syllable_difference = ws[1..-1].reduce([0, ws[0]]) do |(sum, w_p), w|
+      [sum + (syllables(w_p.to_ipa).size - syllables(w.to_ipa).size).abs, w]
+    end[0]
+    [ws, s, syllable_difference]
+  end.sort_by {|(ws, s, d)| [s, d] }
+end
+
+if __FILE__ == $0
+
+  # maybe have the secondary sort be by syllable length difference
+  # or have some kind of meter test
+  phrase = ARGV.join(" ")
+  puts "Family rhymes:"
+  family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  
+  puts "Allterations:"
+  alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  
+  puts "Rhymes:"
+  rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  
+  puts "Rhymes but pay attention to syllables:"
+  syllable_length(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+end
 

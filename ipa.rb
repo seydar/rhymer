@@ -4,21 +4,21 @@ class StringToIpa::Phonetic
   def self.database
     @@database
   end
-#
-#  def to_ipa
-#    # No idea why this shitty hack is required
-#    phonetic = database.execute("SELECT phonetic from phonetics where word = \"#{@word.upcase}\"")
-#
-#    # Changed for my purposes
-#    if phonetic == []
-#      return "" #@word
-#    else
-#      return phonetic[0]["phonetic"]
-#    end
-#  end
+
+  def to_ipa
+    # No idea why this shitty hack is sometimes required
+    phonetic = database.execute("SELECT phonetic from phonetics where word = \"#{@word.upcase}\"")
+
+    # Changed for my purposes
+    if phonetic == []
+      return "" #@word
+    else
+      return phonetic[0]["phonetic"]
+    end
+  end
 end
 
-CS = ["ˈ", "ɑ", "b", "ɝ", "g", "k", "ə", "n", "ˌ", "ɫ", "i", "s", "ɛ", "θ", "m", "t", "ɔ", "r", "d", "v", "a", "z", "æ", "e", "ɪ", "o", "ʊ", "ŋ", "ʃ", "ʒ", "j", "h", "u", "ʌ", "f", "p", "w", "ð", "O", "R", "C", "E", "_", "A", "M", "I", "N", "S", "�", "J", "H", "D", "'", "U", "V", "G", "T", "L", "Y", "Z", "Q", "K", "F", "P", "X", "(", "1", ")", "W", "B"]
+DIPHTHONGS = ["eɪ", "oʊ", "aʊ", "ɪə", "eə", "ɔɪ", "aɪ", "ʊə"]
 
 VOWELS = %w[
 a
