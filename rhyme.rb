@@ -80,7 +80,11 @@ def syllables(word)
   end
 end
 
-# what if the first character is a tick? then it starts with a :high
+# Oddballs this fails on:
+#   incorrigible
+#   
+# How to deal with dactylic words?
+# FIXME make work with arrays (for vowels) and strings
 def meter(word)
   word.gsub /^[ˈ]+/, '' # in case the word begins with a tick
 
@@ -120,13 +124,17 @@ def meter(word)
 end
 
 # This should somehow pay attention to syllable boundaries
-# FIXME
 def vowels(word)
-  word.split(//).filter {|c| VOWELS.include? c }
-end
-
-def family_rhyme(word, corpus)
-  best_match(word, corpus) {|w| vowels w }
+  #word.split(//).filter {|c| VOWELS.include? c }
+  word.split(/(#{DIPHTHONGS.join '|'})/).map do |part|
+    if part =~ /#{DIPHTHONGS.join '|'}/
+      part
+    else
+      part.split(/(?<=#{VOWELS.join '|'})/).filter {|s| not s.empty? }
+    end
+  end.flatten
+     .map    {|part| part.gsub /[^#{VOWELS}]+/, '' }
+     .filter {|s| not s.empty? }
 end
 
 def correlate_synonyms(sentence, &transform)
@@ -143,7 +151,7 @@ def correlate_synonyms(sentence, &transform)
   end
   
   corpus = syns.keys + syns.values.flatten
-  ipas   = ipa(corpus).map {|k, v| [k, transform[v]] }.to_h
+  ipas   = ipa corpus
   corpi  = syns.values
 
   combinations = corpi.reduce do |s, v|
@@ -156,16 +164,29 @@ def correlate_synonyms(sentence, &transform)
     if words.uniq.size != words.size
       # if any duplicate words, -(-1) will be the highest score
       # and thus the biggest loser
-      [words, [-1]] 
+      [words, [-1], [-1]] 
     else
-      pairs = words.map {|w| ipas[w] }.combination 2
+
+      # This looks at all combos of words (two at a time) and checks their distances
+      pairs = words.map {|w| transform[ipas[w]] }.combination 2
+      #pairs = words.map {|w| ipas[w] }.each_cons 2 # only look at adjacent words
       scores = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }
 
-      [words, scores]
+      metering_well = words.each_cons(2).map do |w_1, w_2|
+        # Metering only makes sense if the word is coming in the normal
+        # way. Any alteration wouldn't make sense for English metering
+        if meter(ipas[w_1]).last != meter(ipas[w_2]).first
+          1
+        else
+          0
+        end
+      end
+
+      [words, scores, metering_well]
     end
   end
 
-  sorted = combos.sort_by {|ws, s| -(s.min) }
+  sorted = combos.sort_by {|ws, s, o| [-(s.min), -(o.sum)] }
   #if sorted[0][0][0] == sorted[0][0][1]
   #  sorted[1]
   #else
@@ -181,7 +202,9 @@ def alliterate(sentence)
 end
 
 def family_rhyme(sentence)
-  correlate_synonyms(sentence) {|w| vowels w.reverse }
+  correlate_synonyms(sentence) do |word|
+    syllables(word).map {|syl| syl.gsub /[^#{VOWELS}]+/, ''  }
+  end
 end
 
 def rhyme(sentence)
