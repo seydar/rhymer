@@ -1,4 +1,5 @@
 require 'thesaurus'
+require 'parallel'
 require 'string_to_ipa'
 require './ipa.rb'
 
@@ -133,13 +134,29 @@ def correlate_synonyms(sentence, &transform)
   
   corpus = syns.keys + syns.values.flatten
   ipas   = ipa corpus
-  meters = corpus.map {|w| [w, meter(ipas[w])] }.to_h
+  #meters = corpus.map {|w| [w, meter(ipas[w])] }.to_h
+  meters = Hash.new {|h, k| h[k] = meter(ipas[k]) }
   corpi  = syns.values
 
   combinations = corpi.reduce do |s, v|
     s.product v
   end.map {|ws| ws.flatten }
 
+  cores = 8
+  n = combinations.size / cores
+  combos = Parallel.map combinations.each_slice(n).to_a, :in_processes => cores do |group|
+    score_words group, meters, ipas, transform
+  end.flatten(1)
+
+  sorted = combos.sort_by {|ws, s, o| [-(s.min), -(o.sum)] }
+  #if sorted[0][0][0] == sorted[0][0][1]
+  #  sorted[1]
+  #else
+  #  sorted[0]
+  #end
+end
+
+def score_words(combinations, meters, ipas, transform)
   # This matches **IPA**, not **spelling**. Took me a while to remember,
   # despite having written the code myself.
   combos = combinations.map do |words|
@@ -163,7 +180,7 @@ def correlate_synonyms(sentence, &transform)
     end
   end
 
-  combos = combos.filter {|ws, o| o.sum == ws.size - 1 }.map do |words, o|
+  combos.filter {|ws, o| o.sum == ws.size - 1 }.map do |words, o|
     # This looks at all combos of words (two at a time) and checks their distances
     pairs = words.map {|w| transform[ipas[w]] }.combination 2
     #pairs = words.map {|w| transform[ipas[w]] }.each_cons 2 # only look at adjacent words
@@ -171,13 +188,6 @@ def correlate_synonyms(sentence, &transform)
 
     [words, scores, o]
   end
-
-  sorted = combos.sort_by {|ws, s, o| [-(s.min), -(o.sum)] }
-  #if sorted[0][0][0] == sorted[0][0][1]
-  #  sorted[1]
-  #else
-  #  sorted[0]
-  #end
 end
 
 #require 'pry'
