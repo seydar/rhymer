@@ -30,24 +30,6 @@ def matching_from_start(word_1, word_2)
   i
 end
 
-def best_match(word, corpus, &transform)
-  transform ||= proc {|w| w }
-
-  # Step 1: reverse the words so we can do sane string-matching
-  w_r = transform[word].reverse
-  cs  = corpus.map {|c| [c, transform[c].reverse] }
-
-  # Step 2: see how many characters match for each word
-  tally = {}
-  cs.each do |c, c_r|
-    num_matching = matching_from_start w_r, c_r
-    tally[c] = num_matching
-  end
-
-  # Step 3: deliver the max
-  tally.max[0]
-end
-
 # Split will normally remove the delimiter.
 # By using a regex with look-behind (?<=), we keep the delimiter
 # and maintain it with one of the splittings (as opposed to leaving it
@@ -84,7 +66,6 @@ end
 #   incorrigible
 #   
 # How to deal with dactylic words?
-# FIXME make work with arrays (for vowels) and strings
 def meter(word)
   word.gsub /^[ˈ]+/, '' # in case the word begins with a tick
 
@@ -141,7 +122,7 @@ def correlate_synonyms(sentence, &transform)
   transform ||= proc {|w| w }
 
   syns = sentence.downcase.split(/\s+/).map do |w|
-    [w, synonyms(w)] # limit the size for now
+    [w, synonyms(w)]
   end.to_h # {word => [word]}
   
   if syns.values.size <= 1
@@ -152,6 +133,7 @@ def correlate_synonyms(sentence, &transform)
   
   corpus = syns.keys + syns.values.flatten
   ipas   = ipa corpus
+  meters = corpus.map {|w| [w, meter(ipas[w])] }.to_h
   corpi  = syns.values
 
   combinations = corpi.reduce do |s, v|
@@ -167,23 +149,27 @@ def correlate_synonyms(sentence, &transform)
       [words, [-1], [-1]] 
     else
 
-      # This looks at all combos of words (two at a time) and checks their distances
-      pairs = words.map {|w| transform[ipas[w]] }.combination 2
-      #pairs = words.map {|w| ipas[w] }.each_cons 2 # only look at adjacent words
-      scores = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }
-
       metering_well = words.each_cons(2).map do |w_1, w_2|
         # Metering only makes sense if the word is coming in the normal
         # way. Any alteration wouldn't make sense for English metering
-        if meter(ipas[w_1]).last != meter(ipas[w_2]).first
-          1
+        if meters[w_1].last != meters[w_2].first
+          1 # true. Using a number to aid in sorting
         else
-          0
+          0 # false. Using a number to aid in sorting
         end
       end
 
-      [words, scores, metering_well]
+      [words, metering_well]
     end
+  end
+
+  combos = combos.filter {|ws, o| o.sum == ws.size - 1 }.map do |words, o|
+    # This looks at all combos of words (two at a time) and checks their distances
+    pairs = words.map {|w| transform[ipas[w]] }.combination 2
+    #pairs = words.map {|w| transform[ipas[w]] }.each_cons 2 # only look at adjacent words
+    scores = pairs.map {|w_1, w_2| matching_from_start w_1, w_2 }
+
+    [words, scores, o]
   end
 
   sorted = combos.sort_by {|ws, s, o| [-(s.min), -(o.sum)] }
