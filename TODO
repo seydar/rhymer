@@ -1,0 +1,3 @@
+- scoring words scores the same pair multiple times
+- bulk of the time is spent in #ipas and #score_words
+- add bulk query method to string_to_ipa

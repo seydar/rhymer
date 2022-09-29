@@ -4,8 +4,12 @@ require 'parallel'
 require 'string_to_ipa'
 require './ipa.rb'
 
-# I have no idea if there are diacritics in the IPA DB. If there are,
-# then splitting based on "character" would be a mistake. Just FYI.
+def time(desc, &block)
+  start = Time.now
+  res = block.call
+  puts "#{desc} (#{Time.now - start})"
+  res
+end
 
 def synonyms(word)
   # Can swap out different thesauruses here 
@@ -23,11 +27,15 @@ def ipa(words)
   words.map {|w| [w, w.to_ipa] }.to_h
 end
 
+$matching_time = 0
 def matching_from_start(word_1, word_2)
+  p [word_1, word_2].sort
+  start = Time.now
   i = 0
   until word_1[i] != word_2[i] || word_1[i].nil? || word_2[i].nil?
     i += 1
   end
+  $matching_time += Time.now - start
 
   i
 end
@@ -123,9 +131,12 @@ end
 def correlate_synonyms(sentence, &transform)
   transform ||= proc {|w| w }
 
-  syns = sentence.downcase.split(/\s+/).map do |w|
-    [w, synonyms(w)]
-  end.to_h # {word => [word]}
+  syns = nil
+  time "synonyms" do
+    syns = sentence.downcase.split(/\s+/).map do |w|
+      [w, synonyms(w)]
+    end.to_h # {word => [word]}
+  end
   
   if syns.values.size <= 1
     plural = syns.values.size != 1
@@ -134,27 +145,39 @@ def correlate_synonyms(sentence, &transform)
   end
   
   corpus = syns.keys + syns.values.flatten
-  ipas   = ipa corpus
-  #meters = corpus.map {|w| [w, meter(ipas[w])] }.to_h
-  meters = Hash.new {|h, k| h[k] = meter(ipas[k]) }
-  corpi  = syns.values
+  ipas = nil
+  time "ipa" do
+    ipas   = ipa corpus
+  end
 
-  combinations = corpi.reduce do |s, v|
-    s.product v
-  end.map {|ws| ws.flatten }
+  corpi, meters = nil
+  time "metering" do
+    # Since `meters` is used in different parallel processes, they won't be able
+    # to reuse each other's work, so it needs to be done in advance
+    meters = corpus.map {|w| [w, meter(ipas[w])] }.to_h
+    #meters = Hash.new {|h, k| h[k] = meter(ipas[k]) }
+    corpi  = syns.values
+  end
 
-  cores = 8
-  n = combinations.size / cores
-  combos = Parallel.map combinations.each_slice(n).to_a, :in_processes => cores do |group|
-    score_words group, meters, ipas, transform
-  end.flatten(1)
+  combinations = nil
+  time "reduction" do
+    combinations = corpi.reduce do |s, v|
+      s.product v
+    end.map {|ws| ws.flatten }
+  end
 
-  sorted = combos.sort_by {|ws, s, o| [-(s.min), -(o.sum)] }
-  #if sorted[0][0][0] == sorted[0][0][1]
-  #  sorted[1]
-  #else
-  #  sorted[0]
-  #end
+  combos = nil
+  time "scoring" do
+    cores = 8
+    n = combinations.size / cores
+    combos = Parallel.map combinations.each_slice(n).to_a, :in_processes => cores do |group|
+      s = score_words group, meters, ipas, transform
+      puts $matching_time
+      s
+    end.flatten(1)
+  end
+
+  combos.sort_by {|ws, s, o| [-(s.min), -(o.sum)] }
 end
 
 def score_words(combinations, meters, ipas, transform)
@@ -191,11 +214,10 @@ def score_words(combinations, meters, ipas, transform)
   end
 end
 
-#require 'pry'
-#binding.pry
-
 def alliterate(sentence)
-  correlate_synonyms sentence
+  time "alliterate" do
+    correlate_synonyms sentence
+  end
 end
 
 def family_rhyme(sentence)
@@ -223,16 +245,16 @@ if __FILE__ == $0
   # maybe have the secondary sort be by syllable length difference
   # or have some kind of meter test
   phrase = ARGV.join(" ")
-  puts "Family rhymes:"
-  family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  #puts "Family rhymes:"
+  #family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
   
   puts "Allterations:"
   alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
   
-  puts "Rhymes:"
-  rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
-  
-  puts "Rhymes but pay attention to syllables:"
-  syllable_length(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  #puts "Rhymes:"
+  #rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  #
+  #puts "Rhymes but pay attention to syllables:"
+  #syllable_length(phrase)[0..20].each {|ws| puts "\t#{ws}" }
 end
 
