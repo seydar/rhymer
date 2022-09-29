@@ -5,6 +5,12 @@ class StringToIpa::Phonetic
     @@database
   end
 
+  def self.find_all(words)
+    result = database.execute("SELECT * FROM phonetics WHERE word in (#{(['?'] * words.size).join ', '})", words.map {|w| w.upcase })
+    p result
+    result.map {|r| r['phonetic'] }
+  end
+
   def to_ipa
     # No idea why this shitty hack is sometimes required
     phonetic = database.execute("SELECT phonetic from phonetics where word = \"#{@word.upcase}\"")
@@ -15,6 +21,12 @@ class StringToIpa::Phonetic
     else
       return phonetic[0]["phonetic"]
     end
+  end
+end
+
+class Array
+  def to_ipa
+    StringToIpa::Phonetic.find_all self
   end
 end
 

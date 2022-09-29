@@ -24,7 +24,8 @@ def synonyms(word)
 end
 
 def ipa(words)
-  words.map {|w| [w, w.to_ipa] }.to_h
+  #words.map {|w| [w, w.to_ipa] }.to_h
+  words.zip(words.to_ipa).to_h
 end
 
 $matching_time = 0
@@ -241,7 +242,7 @@ def syllable_length(sentence)
 end
 
 if __FILE__ == $0
-
+  "hello".to_ipa
   # maybe have the secondary sort be by syllable length difference
   # or have some kind of meter test
   phrase = ARGV.join(" ")
