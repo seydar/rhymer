@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require 'thesaurus'
 require 'parallel'
 require 'string_to_ipa'
@@ -68,7 +69,7 @@ end
 #   
 # How to deal with dactylic words?
 def meter(word)
-  word.gsub /^[ˈ]+/, '' # in case the word begins with a tick
+  word = word.gsub /^[ˈ]+/, '' # in case the word begins with a tick
 
   # If the stress comes in the middle of the word,
   # we know that immediately after it will be a `:high` and
