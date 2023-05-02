@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 require 'thesaurus'
 require 'parallel'
-require 'string_to_ipa'
-require './ipa.rb'
+require_relative './ipa.rb'
 
 def time(desc, &block)
   start = Time.now
@@ -11,6 +10,8 @@ def time(desc, &block)
   res
 end
 
+# Not guaranteed to find a match for every word in the corpus, so we
+# have to downsample to only those with an entry in the DB
 def synonyms(word)
   # Can swap out different thesauruses here 
   entries = Thesaurus.lookup word
@@ -20,25 +21,30 @@ def synonyms(word)
   syns = entries.map {|e| e.root }
 
   # only take the one-word synonyms
-  syns.filter {|w| w.split(/\s/).size == 1}
+  syns.filter {|w| w.split(/\s/).size == 1 }
+  # only take synonyms that we have IPA for
+      .filter {|w| DB[:phonetics].first :word => w.upcase }
 end
 
 def ipa(words)
-  #words.map {|w| [w, w.to_ipa] }.to_h
-  words.zip(words.to_ipa).to_h
+  #res = DB[:phonetics].filter(:word => words.map(&:upcase)).all
+  #res.map {|w| [w[:word], w[:phonetic]] }.to_h
+  words.map {|w| [w, w.to_ipa] }.to_h
 end
 
-$matching_time = 0
+@memoization = {}
 def matching_from_start(word_1, word_2)
-  p [word_1, word_2].sort
-  start = Time.now
+  key = [word_1, word_2].sort
+  if @memoization[key]
+    return @memoization[key]
+  end
+
   i = 0
   until word_1[i] != word_2[i] || word_1[i].nil? || word_2[i].nil?
     i += 1
   end
-  $matching_time += Time.now - start
 
-  i
+  @memoization[key] = i
 end
 
 # Split will normally remove the delimiter.
@@ -145,8 +151,9 @@ def correlate_synonyms(sentence, &transform)
           "word#{plural ? "s" : ""} provided)"
   end
   
-  corpus = syns.keys + syns.values.flatten
+  corpus = (syns.keys + syns.values.flatten).uniq
   ipas = nil
+
   time "ipa" do
     ipas   = ipa corpus
   end
@@ -172,9 +179,7 @@ def correlate_synonyms(sentence, &transform)
     cores = 8
     n = combinations.size / cores
     combos = Parallel.map combinations.each_slice(n).to_a, :in_processes => cores do |group|
-      s = score_words group, meters, ipas, transform
-      puts $matching_time
-      s
+      score_words group, meters, ipas, transform
     end.flatten(1)
   end
 
@@ -242,20 +247,19 @@ def syllable_length(sentence)
 end
 
 if __FILE__ == $0
-  "hello".to_ipa
   # maybe have the secondary sort be by syllable length difference
   # or have some kind of meter test
   phrase = ARGV.join(" ")
-  #puts "Family rhymes:"
-  #family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  puts "Family rhymes:"
+  family_rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
   
   puts "Allterations:"
   alliterate(phrase)[0..20].each {|ws| puts "\t#{ws}" }
   
-  #puts "Rhymes:"
-  #rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
-  #
-  #puts "Rhymes but pay attention to syllables:"
-  #syllable_length(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+  puts "Rhymes:"
+  rhyme(phrase)[0..20].each {|ws| puts "\t#{ws}" }
+
+  puts "Rhymes but pay attention to syllables:"
+  syllable_length(phrase)[0..20].each {|ws| puts "\t#{ws}" }
 end
 

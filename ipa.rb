@@ -1,32 +1,29 @@
-require 'string_to_ipa'
+require 'sequel'
 
-class StringToIpa::Phonetic
-  def self.database
-    @@database
+DB = Sequel.connect "sqlite://ipagem.db"
+
+class Phonetic
+
+  def self.find_all(sanat)
+    words = DB[:phonetics].filter(:word => sanat.map(&:upcase)).all
+    words.map {|w| w[:phonetic].to_s }
   end
 
-  def self.find_all(words)
-    result = database.execute("SELECT * FROM phonetics WHERE word in (#{(['?'] * words.size).join ', '})", words.map {|w| w.upcase })
-    p result
-    result.map {|r| r['phonetic'] }
-  end
-
-  def to_ipa
-    # No idea why this shitty hack is sometimes required
-    phonetic = database.execute("SELECT phonetic from phonetics where word = \"#{@word.upcase}\"")
-
-    # Changed for my purposes
-    if phonetic == []
-      return "" #@word
-    else
-      return phonetic[0]["phonetic"]
-    end
+  def self.find(sana)
+    word = DB[:phonetics].filter(:word => sana.upcase).first
+    word && word[:phonetic].to_s
   end
 end
 
 class Array
   def to_ipa
-    StringToIpa::Phonetic.find_all self
+    Phonetic::find_all self
+  end
+end
+
+class String
+  def to_ipa
+    Phonetic::find self
   end
 end
 
