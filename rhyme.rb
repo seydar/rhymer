@@ -6,7 +6,7 @@ require_relative './ipa.rb'
 def time(desc, &block)
   start = Time.now
   res = block.call
-  puts "#{desc} (#{Time.now - start})"
+  #puts "#{desc} (#{Time.now - start})"
   res
 end
 
